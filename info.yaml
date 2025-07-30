@@ -1,56 +1,54 @@
 # Tiny Tapeout project information
 project:
-  title:        ""      # Project title
-  author:       ""      # Your name
-  discord:      ""      # Your discord username, for communication and automatically assigning you a Tapeout role (optional)
-  description:  ""      # One line description of what your project does
+  title:        "UART Controller with FIFO and Interrupts"      # Project title
+  author:       "Your Name"      # Your name
+  discord:      "your_discord"      # Your discord username, for communication and automatically assigning you a Tapeout role (optional)
+  description:  "Full-featured UART with configurable baud rate, FIFO buffering, and interrupt generation"      # One line description of what your project does
   language:     "Verilog" # other examples include SystemVerilog, Amaranth, VHDL, etc
-  clock_hz:     0       # Clock frequency in Hz (or 0 if not applicable)
-
+  clock_hz:     50000000       # Clock frequency in Hz (50 MHz typical for Tiny Tapeout)
   # How many tiles your design occupies? A single tile is about 167x108 uM.
   tiles: "1x1"          # Valid values: 1x1, 1x2, 2x2, 3x2, 4x2, 6x2 or 8x2
-
   # Your top module name must start with "tt_um_". Make it unique by including your github username:
-  top_module:  "tt_um_example"
-
+  top_module:  "tt_um_uart"
   # List your project's source files here.
   # Source files must be in ./src and you must list each source file separately, one per line.
   # Don't forget to also update `PROJECT_SOURCES` in test/Makefile.
   source_files:
     - "project.v"
+    
 
 # The pinout of your project. Leave unused pins blank. DO NOT delete or add any pins.
 # This section is for the datasheet/website. Use descriptive names (e.g., RX, TX, MOSI, SCL, SEG_A, etc.).
 pinout:
   # Inputs
-  ui[0]: ""
-  ui[1]: ""
-  ui[2]: ""
-  ui[3]: ""
-  ui[4]: ""
-  ui[5]: ""
-  ui[6]: ""
-  ui[7]: ""
-
+  ui[0]: "TR_EN"         # Transmitter Enable
+  ui[1]: "MODE_OSL"      # Mode/Operational Select
+  ui[2]: "CLK_SEL"       # Clock Selection (0=16x oversample, 1=direct)
+  ui[3]: "TX_WR_EN"      # TX Data Write Enable
+  ui[4]: "TR_DATA_LOAD"  # Transmit Data Load
+  ui[5]: "RX_RD_EN"      # RX Data Read Enable
+  ui[6]: ""              # Reserved
+  ui[7]: ""              # Reserved
+  
   # Outputs
-  uo[0]: ""
-  uo[1]: ""
-  uo[2]: ""
-  uo[3]: ""
-  uo[4]: ""
-  uo[5]: ""
-  uo[6]: ""
-  uo[7]: ""
-
+  uo[0]: "RX_DATA[0]"    # Received Data Bit 0
+  uo[1]: "RX_DATA[1]"    # Received Data Bit 1
+  uo[2]: "RX_DATA[2]"    # Received Data Bit 2
+  uo[3]: "RX_DATA[3]"    # Received Data Bit 3
+  uo[4]: "RX_DATA[4]"    # Received Data Bit 4
+  uo[5]: "RX_DATA[5]"    # Received Data Bit 5
+  uo[6]: "RX_DATA[6]"    # Received Data Bit 6
+  uo[7]: "RX_DATA[7]"    # Received Data Bit 7
+  
   # Bidirectional pins
-  uio[0]: ""
-  uio[1]: ""
-  uio[2]: ""
-  uio[3]: ""
-  uio[4]: ""
-  uio[5]: ""
-  uio[6]: ""
-  uio[7]: ""
+  uio[0]: "RX_IN/TX_OUT"   # RX Data Input / TX Data Output
+  uio[1]: "TX_FIFO[1]/TX_I_INT"  # TX FIFO Data Bit 1 / TX Input Interrupt
+  uio[2]: "TX_FIFO[2]/RX_I_INT"  # TX FIFO Data Bit 2 / RX Input Interrupt
+  uio[3]: "TX_FIFO[3]/TX_O_INT"  # TX FIFO Data Bit 3 / TX Output Interrupt
+  uio[4]: "TX_FIFO[4]/RX_O_INT"  # TX FIFO Data Bit 4 / RX Output Interrupt
+  uio[5]: "TX_FIFO[5]/TR_BUSY"   # TX FIFO Data Bit 5 / Transmitter Busy
+  uio[6]: "TX_FIFO[6]"     # TX FIFO Data Bit 6
+  uio[7]: "TX_FIFO[7]"     # TX FIFO Data Bit 7
 
 # Do not change!
 yaml_version: 6
