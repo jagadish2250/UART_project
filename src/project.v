@@ -1,116 +1,54 @@
-`timescale 1ns/1ps
+`default_nettype none
 
-module uart_top_tt (
-    input        clk,
-    input        rst_n,
-
-    input  [7:0] io_in,
-    output [7:0] io_out,
-    input  [7:0] io_in_en,
-    output [7:0] io_out_en
+module tt_um_uart (
+    input  wire [7:0] ui_in,     // control inputs
+    output wire [7:0] uo_out,    // received data
+    input  wire [7:0] uio_in,    // tx_data (bits 7:1), rx_data (bit 0)
+    output wire [7:0] uio_out,   // tx line + interrupt flags
+    output wire [7:0] uio_oe,    // output enable
+    input  wire       ena,       // always 1
+    input  wire       clk,       // main clock
+    input  wire       rst_n      // active low reset
 );
 
-    parameter WIDTH = 8;
+    // UART I/O wires
+    wire tx_line;
+    wire [7:0] rx_data;
+    wire tx_i_int, rx_i_int, tx_o_int, rx_o_int, tr_busy;
+    wire rx_we;
 
-    // Input signals
-    wire clk_sel           = io_in[0];
-    wire mode_osl          = io_in[1];
-    wire tr_data_load      = io_in[2];
-    wire rx_data_read_en   = io_in[3];
-    wire [3:0] tr_fifo_data_w = io_in[7:4];
+    // Output assignments
+    assign uo_out       = rx_data;
+    assign uio_out[0]   = tx_line;
+    assign uio_out[1]   = tx_i_int;
+    assign uio_out[2]   = rx_i_int;
+    assign uio_out[3]   = tx_o_int;
+    assign uio_out[4]   = rx_o_int;
+    assign uio_out[5]   = tr_busy;
+    assign uio_out[7:6] = 2'b00;
 
-    // Outputs from internal UART
-    wire tx_data_out;
-    wire transmit_busy;
-    wire tx_o_interpt;
-    wire rx_o_interpt;
-    wire tx_i_interpt;
-    wire rx_i_interpt;
-    // Optional: using only two bits of RX data
-    wire [1:0] rx_data_read_out_lt = rx_data_read_out[1:0];
+    assign uio_oe       = 8'b00111111; // uio_out[5:0] as outputs
 
-    // Internal connections
-    wire modified_clk;
-    wire clk_out;
-    wire tr_d_ready;
-    wire rx_fifo_en;
-    wire [WIDTH-1:0] tr_fifo_data_in;
-    wire [WIDTH-1:0] rx_fifo_data_in;
-
-    assign transmit_busy = tr_bz; // from internal module
-
-    // Clock multiplexer
-    mux_2_1 ck_mux (
-        .in_0(clk),
-        .in_1(clk_out),
-        .sel(clk_sel),
-        .out(modified_clk)
-    );
-
-    // Baud generator
-    baud_gen clk_generator (
+    // Instantiate top UART module
+    uart_top #(.WIDTH(8)) uart_inst (
         .clk(clk),
+        .clk_sel(ui_in[2]),
         .rstn(rst_n),
-        .dlh_dll({12'b0, tr_fifo_data_w, rx_data_read_en}), // packed example
-        .mode_osl(mode_osl),
-        .bclk(clk_out)
+        .tr_en(ui_in[0]),
+        .mode_osl(ui_in[1]),
+        .dlh_dll(16'h0020),               // fixed baud rate for Tiny Tapeout
+        .tr_fifo_data_w(uio_in[7:1]),
+        .rx_data_in(uio_in[0]),
+        .tx_data_out(tx_line),
+        .rx_data_read_out(rx_data),
+        .rx_data_read_en(ui_in[5]),
+        .tx_data_w_en(ui_in[3]),
+        .transmit_busy(tr_busy),
+        .tx_i_interpt(tx_i_int),
+        .rx_i_interpt(rx_i_int),
+        .tx_o_interpt(tx_o_int),
+        .rx_o_interpt(rx_o_int),
+        .tr_data_load(ui_in[4])
     );
 
-    // Transmit FIFO
-    tfifo #(.WIDTH(WIDTH)) tr_fifo (
-        .clk_i(modified_clk),
-        .rst_n_i(rst_n),
-        .we_i(tx_data_w_en /* external or kept tied via io_en input */),
-        .re_i(tr_data_load),
-        .wdata_i({4'b0, tr_fifo_data_w}),
-        .o_interpt(tx_o_interpt),
-        .i_interpt(tx_i_interpt),
-        .d_ready(tr_d_ready),
-        .rdata_o(tr_fifo_data_in),
-        .tr_bz(tr_bz)
-    );
-
-    // Transmitter
-    transmitter #(.WIDTH(WIDTH)) tr_module (
-        .en(tr_en /* external tie or io mapping */),
-        .d_ready(tr_d_ready),
-        .clk(modified_clk),
-        .rstn(rst_n),
-        .d_in(tr_fifo_data_in),
-        .tx_data(tx_data_out),
-        .tr_bz(tr_bz)
-    );
-
-    // Receive FIFO
-    rfifo #(.WIDTH(WIDTH)) rr_fifo (
-        .clk_i(modified_clk),
-        .rst_n_i(rst_n),
-        .we_i(rx_fifo_en),
-        .re_i(rx_data_read_en),
-        .wdata_i(rx_fifo_data_in),
-        .o_interpt(rx_o_interpt),
-        .i_interpt(rx_i_interpt),
-        .rdata_o(rx_data_read_out)
-    );
-
-    // Receiver
-    receiver #(.WIDTH(WIDTH)) rx_module (
-        .clk(modified_clk),
-        .rstn(rst_n),
-        .rx_data(rx_data_in /* external pin or tie via io? */),
-        .d_out(rx_fifo_data_in),
-        .fifo_we_en(rx_fifo_en)
-    );
-
-    // Map outputs to io_out
-    assign io_out[0] = tx_data_out;
-    assign io_out[1] = transmit_busy;
-    assign io_out[2] = tx_o_interpt;
-    assign io_out[3] = rx_o_interpt;
-    assign io_out[4] = tx_i_interpt;
-    assign io_out[5] = rx_i_interpt;
-    assign io_out[7:6] = rx_data_read_out_lt;
-
-    // Enable output pins
-    assign io_out_en = 8'b11111111;
 endmodule
