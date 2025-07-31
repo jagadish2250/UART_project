@@ -11,10 +11,6 @@ project:
   source_files:
     - "project.v"
     - "uart_top.v"
-    - "uart_tx.v"
-    - "uart_rx.v"
-    - "uart_fifo.v"
-    - "baud_gen.v"
 
 pinout:
   # Inputs
@@ -26,7 +22,7 @@ pinout:
   ui[5]: "RX_RD_EN"
   ui[6]: ""
   ui[7]: ""
-
+  
   # Outputs
   uo[0]: "RX_DATA[0]"
   uo[1]: "RX_DATA[1]"
@@ -36,7 +32,7 @@ pinout:
   uo[5]: "RX_DATA[5]"
   uo[6]: "RX_DATA[6]"
   uo[7]: "RX_DATA[7]"
-
+  
   # Bidirectional pins
   uio[0]: "RX_IN/TX_OUT"
   uio[1]: "TX_FIFO[1]/TX_I_INT"
